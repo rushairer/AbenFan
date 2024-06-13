@@ -4,6 +4,7 @@
 #include <Adafruit_NeoPixel.h>
 #include "Thermometer.h"
 #include "Fan.h"
+#include "RGBLed.h"
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -43,18 +44,15 @@
 U8G2_SSD1306_128X64_NONAME_F_2ND_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 AHT20 aht20;
-
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(1, RGBLED_PIN, NEO_GRB + NEO_KHZ800);
-
 Thermometer thermometer(&aht20, DEFAULT_TEMPERATURE_OFFSET, DEFAULT_HUMIDITY_OFFSET);
+
 Fan fan(FAN_CHANNEL, FAN_PIN_A, FAN_PIN_B, FAN_PIN_B, 39000, 10, 990, 1000, 1012, 1024);
 
-int i = 10;
-int fanSpeed = 1024;
-int buttonTimer = 0;
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(1, RGBLED_PIN, NEO_GRB + NEO_KHZ800);
+RGBLed rgbLed = RGBLed(&pixels);
 
-void taskFunction(void *parameter);
-uint32_t Wheel(byte WheelPos);
+int i = 10;
+int buttonTimer = 0;
 
 void setup()
 {
@@ -65,41 +63,26 @@ void setup()
     delay(2000);
     digitalWrite(OFF_PIN, HIGH);
 
-    fan.setup();
-
     pinMode(BUTTON1_PIN, INPUT_PULLDOWN);
     pinMode(BUTTON2_PIN, INPUT_PULLDOWN);
+
+    // fan
+    fan.setup();
 
     // thermometer
     Wire.begin(AHT20_SDA_PIN, AHT20_SCL_PIN);
     thermometer.setup();
 
-    Wire1.begin(OLED_SDA_PIN, OLED_SCL_PIN);
+    // rgbled
+    rgbLed.setup();
 
+    // oled
+    Wire1.begin(OLED_SDA_PIN, OLED_SCL_PIN);
     u8g2.setFontMode(1);
     u8g2.setBitmapMode(1);
     // u8g2.setFontPosTop();
     u8g2.enableUTF8Print();
     u8g2.begin();
-
-    pixels.begin();
-
-    xTaskCreatePinnedToCore(taskFunction, "Task", 2048, NULL, 2, NULL, 1);
-}
-
-void taskFunction(void *parameter)
-{
-    for (;;)
-    {
-        uint32_t j;
-        for (j = 0; j < 256; j++)
-        {
-            pixels.setPixelColor(0, Wheel(j & 255));
-            pixels.show();
-            vTaskDelay(100);
-        }
-        vTaskDelay(100);
-    }
 }
 
 void loop()
@@ -150,22 +133,4 @@ void loop()
         sprintf(words, "%.1fRH", thermometer.getHumidity());
         u8g2.drawStr(50, 54, words);
     } while (u8g2.nextPage());
-}
-
-uint32_t Wheel(byte WheelPos)
-{
-    if (WheelPos < 85)
-    {
-        return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-    }
-    else if (WheelPos < 170)
-    {
-        WheelPos -= 85;
-        return pixels.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-    }
-    else
-    {
-        WheelPos -= 170;
-        return pixels.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-    }
 }
