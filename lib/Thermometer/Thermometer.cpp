@@ -11,7 +11,8 @@ Thermometer::Thermometer(AHT20 *aht20,
     : _aht20(aht20),
       _value(value),
       _temperatureOffset(temperatureOffset),
-      _humidityOffset(humidityOffset)
+      _humidityOffset(humidityOffset),
+      _isAvailable(0)
 {
     if (aht20 == nullptr)
     {
@@ -28,7 +29,8 @@ Thermometer::Thermometer(AHT20 *aht20,
                          float humidityOffset = 0.0)
     : _aht20(aht20),
       _temperatureOffset(temperatureOffset),
-      _humidityOffset(humidityOffset)
+      _humidityOffset(humidityOffset),
+      _preferences()
 {
     if (aht20 == nullptr)
     {
@@ -44,19 +46,27 @@ Thermometer::~Thermometer()
     _value = nullptr;
     _temperatureOffset = 0;
     _humidityOffset = 0;
+    _isAvailable = 0;
 }
 
 void Thermometer::setup()
 {
 
+    _preferences.begin("thermometer", true);
+    _temperatureOffset = _preferences.getFloat("toffset", _temperatureOffset);
+    _humidityOffset = _preferences.getFloat("hoffset", _humidityOffset);
+    _preferences.end();
+
     if (_aht20->begin() == false)
     {
         Serial.println("AHT20 not detected. Please check wiring. Freezing.");
+        _isAvailable = 0;
     }
     else
     {
         _value->temperature = _aht20->getTemperature() + _temperatureOffset;
         _value->humidity = _aht20->getHumidity() + _humidityOffset;
+        _isAvailable = 1;
     }
 
     timer.every(60000, &Thermometer::refreshAHT20, this);
@@ -77,10 +87,60 @@ float Thermometer::getHumidity()
     return _value->humidity;
 }
 
+float Thermometer::getTemperatureOffset()
+{
+    return _temperatureOffset;
+}
+
+float Thermometer::getHumidityOffset()
+{
+    return _humidityOffset;
+}
+
+void Thermometer::setTemperatureOffset(float temperatureOffset)
+{
+    _temperatureOffset = temperatureOffset;
+    _preferences.begin("thermometer", false);
+    _preferences.putFloat("toffset", _temperatureOffset);
+    _preferences.end();
+
+    _value->temperature = _aht20->getTemperature() + _temperatureOffset;
+}
+
+void Thermometer::setHumidityOffset(float humidityOffset)
+{
+    _humidityOffset = humidityOffset;
+    _preferences.begin("thermometer", false);
+    _preferences.putFloat("hoffset", _humidityOffset);
+    _preferences.end();
+
+    _value->humidity = _aht20->getHumidity() + _humidityOffset;
+}
+
+uint8_t
+Thermometer::isAvailable()
+{
+    return _isAvailable;
+}
+
 bool Thermometer::refreshAHT20(void *p)
 {
+    if (p == nullptr)
+    {
+        return false;
+    }
     Thermometer *ptr = (Thermometer *)p;
+    if (!ptr->_aht20->isConnected() || !ptr->_aht20->available())
+    {
+        return false;
+    }
     ptr->_value->temperature = ptr->_aht20->getTemperature() + ptr->_temperatureOffset;
     ptr->_value->humidity = ptr->_aht20->getHumidity() + ptr->_humidityOffset;
+
+    Serial.println("temperatureOffset:");
+    Serial.println(ptr->_temperatureOffset);
+
+    Serial.println("humidityOffset:");
+    Serial.println(ptr->_humidityOffset);
     return true;
 }

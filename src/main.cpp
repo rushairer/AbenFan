@@ -1,10 +1,14 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
+#include <MUIU8g2.h>
 #include <AHT20.h>
 #include <Adafruit_NeoPixel.h>
+
 #include "Thermometer.h"
 #include "Fan.h"
 #include "RGBLed.h"
+#include "dino_game_arduino.h"
+#include "Menu.h"
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -41,6 +45,15 @@
 #define DEFAULT_TEMPERATURE_OFFSET -2.0
 #define DEFAULT_HUMIDITY_OFFSET -4.0
 
+typedef enum
+{
+    ABENFAN_SCENE_WELCOME = 0,
+    ABENFAN_SCENE_MENU = 1,
+    ABENFAN_SCENE_DINORUN = 2,
+    ABENFAN_SCENE_DINOULTRAMANRUN = 3,
+
+} AbenFanScene;
+
 U8G2_SSD1306_128X64_NONAME_F_2ND_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 AHT20 aht20;
@@ -51,20 +64,32 @@ Fan fan(FAN_CHANNEL, FAN_PIN_A, FAN_PIN_B, FAN_PIN_B, 39000, 10, 990, 1000, 1012
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(1, RGBLED_PIN, NEO_GRB + NEO_KHZ800);
 RGBLed rgbLed = RGBLed(&pixels);
 
+DinoGameArduino dinoGameArduino(&u8g2);
+
+Menu menu(&u8g2);
+
 int i = 10;
 int buttonTimer = 0;
+
+uint8_t inDinoRun = 0;
+
+AbenFanScene currentScene = ABENFAN_SCENE_WELCOME;
+
+void whenFormInactiveFunc();
 
 void setup()
 {
     Serial.begin(115200);
 
+    // 按住2秒后启动
     pinMode(OFF_PIN, OUTPUT_OPEN_DRAIN);
     digitalWrite(OFF_PIN, LOW);
     delay(2000);
     digitalWrite(OFF_PIN, HIGH);
 
-    pinMode(BUTTON1_PIN, INPUT_PULLDOWN);
-    pinMode(BUTTON2_PIN, INPUT_PULLDOWN);
+    // 设置按键
+    pinMode(BUTTON1_PIN, INPUT_PULLUP);
+    pinMode(BUTTON2_PIN, INPUT_PULLUP);
 
     // fan
     fan.setup();
@@ -78,59 +103,144 @@ void setup()
 
     // oled
     Wire1.begin(OLED_SDA_PIN, OLED_SCL_PIN);
+    u8g2.begin(BUTTON1_PIN, BUTTON2_PIN, U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE);
     u8g2.setFontMode(1);
-    u8g2.setBitmapMode(1);
-    // u8g2.setFontPosTop();
-    u8g2.enableUTF8Print();
-    u8g2.begin();
+
+    // menu
+    menu.setup();
+    MenuSetRGBLightOn(rgbLed.isOn());
+    MenuSetTemperatureOffset(uint8_t(thermometer.getTemperatureOffset() + 5));
+    MenuSetHumidityOffset(uint8_t(thermometer.getHumidityOffset() + 5));
 }
 
 void loop()
 {
     thermometer.loop();
     fan.loop();
+    menu.loop(whenFormInactiveFunc);
+}
 
-    if (digitalRead(BUTTON1_PIN) == LOW)
+void MenuDinoRunFunc()
+{
+    dinoGameArduino.setup();
+    currentScene = ABENFAN_SCENE_DINORUN;
+}
+
+void MenuDinoUltramanRunFunc()
+{
+    dinoGameArduino.setup();
+    dinoGameArduino.showUltraman();
+    currentScene = ABENFAN_SCENE_DINOULTRAMANRUN;
+}
+
+void MenuTurnOffFunc()
+{
+    digitalWrite(OFF_PIN, LOW);
+    delay(1000);
+}
+
+void MenuSendIsRGBLightOn(uint8_t on)
+{
+    rgbLed.toggle(on);
+}
+
+void MenuSendTemperatureOffset(uint8_t offset)
+{
+    thermometer.setTemperatureOffset(float(offset) - 5.0);
+}
+
+void MenuSendHumidityOffset(uint8_t offset)
+{
+    thermometer.setHumidityOffset(float(offset) - 5.0);
+}
+
+void MenuIsClosed()
+{
+    currentScene = ABENFAN_SCENE_WELCOME;
+}
+
+void whenFormInactiveFunc()
+{
+    if (currentScene == ABENFAN_SCENE_DINORUN || currentScene == ABENFAN_SCENE_DINOULTRAMANRUN)
     {
-        if (millis() - buttonTimer >= 500)
+        if (digitalRead(BUTTON1_PIN) == LOW && digitalRead(BUTTON2_PIN) == LOW)
         {
-            buttonTimer = millis();
-            fan.nextLevel();
-        }
-    }
-    else if (digitalRead(BUTTON2_PIN) == LOW)
-    {
+            // dinoGameArduino.setCheatMode(CHEAT_MODE_CHEAT);
+            dinoGameArduino.quitGame();
+            if (currentScene == ABENFAN_SCENE_DINORUN)
+            {
+                menu.gotoForm(20, 1);
+            }
+            else if (currentScene == ABENFAN_SCENE_DINOULTRAMANRUN)
+            {
+                menu.gotoForm(20, 2);
+            }
+            currentScene = ABENFAN_SCENE_MENU;
 
-        digitalWrite(OFF_PIN, LOW);
-        delay(1000);
-    }
-
-    u8g2.firstPage();
-    do
-    {
-        if (i < u8g2.getWidth())
-        {
-            i = i + fan.getLevel();
+            delay(300);
         }
         else
         {
-            i = 0;
+            if (digitalRead(BUTTON1_PIN) == LOW)
+            {
+                dinoGameArduino.startGame();
+            }
+            if (digitalRead(BUTTON2_PIN) == LOW)
+            {
+                dinoGameArduino.dinoJump();
+            }
         }
-
-        if (fan.getLevel() > 0)
+        dinoGameArduino.loop();
+    }
+    else if (currentScene == ABENFAN_SCENE_WELCOME)
+    {
+        if (digitalRead(BUTTON1_PIN) == LOW)
         {
-            u8g2.drawHLine(0, u8g2.getHeight() - 1, i);
+            if (millis() - buttonTimer >= 500)
+            {
+                buttonTimer = millis();
+                fan.nextLevel();
+            }
+        }
+        else if (digitalRead(BUTTON2_PIN) == LOW)
+        {
+            menu.start();
+            delay(300);
         }
 
-        char words[20];
-        sprintf(words, "Level: %d", fan.getLevel());
-        u8g2.setFont(u8g2_font_8x13B_tf);
-        u8g2.drawStr(0, 24, words);
+        // 欢迎屏
+        u8g2.firstPage();
+        do
+        {
+            // 画线动画
+            if (i < u8g2.getWidth())
+            {
+                i = i + fan.getLevel();
+            }
+            else
+            {
+                i = 0;
+            }
+            if (fan.getLevel() == 0)
+            {
+                i = 0;
+            }
+            u8g2.drawHLine(0, u8g2.getHeight() - 1, i);
 
-        u8g2.setFont(u8g2_font_7x13_tf);
-        sprintf(words, "%.1fC", thermometer.getTemperature());
-        u8g2.drawStr(0, 54, words);
-        sprintf(words, "%.1fRH", thermometer.getHumidity());
-        u8g2.drawStr(50, 54, words);
-    } while (u8g2.nextPage());
+            char words[20];
+            sprintf(words, "Level: %d", fan.getLevel());
+            u8g2.setFont(u8g2_font_8x13B_tf);
+            u8g2.drawStr(0, 24, words);
+
+            // 显示温湿度
+            if (thermometer.isAvailable())
+            {
+                u8g2.setFont(u8g2_font_7x13_tf);
+                sprintf(words, "%.1fC", thermometer.getTemperature());
+                u8g2.drawStr(0, 54, words);
+                sprintf(words, "%.1fRH", thermometer.getHumidity());
+                u8g2.drawStr(50, 54, words);
+            }
+        } while (u8g2.nextPage());
+    }
 }
