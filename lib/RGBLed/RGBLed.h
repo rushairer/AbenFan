@@ -1,4 +1,6 @@
-#ifndef __RGBLed
+#ifndef __RGBLed_H_
+#define __RGBLed_H_
+
 #include <Adafruit_NeoPixel.h>
 #include <functional>
 #include <Preferences.h>
@@ -21,4 +23,4 @@ protected:
     Preferences _preferences;
 };
 
-#endif // !__RGBLed
+#endif // !__RGBLed_H_

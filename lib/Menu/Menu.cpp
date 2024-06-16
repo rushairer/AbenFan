@@ -4,17 +4,17 @@ uint8_t menuRGBLightOn = 1;
 uint8_t menuTemperatureOffset = 5;
 uint8_t menuHumidityOffset = 5;
 
-void MenuSetRGBLightOn(uint8_t on)
+void MenuSetupRGBLightOn(uint8_t on)
 {
     menuRGBLightOn = on;
 }
 
-void MenuSetTemperatureOffset(uint8_t offset)
+void MenuSetupTemperatureOffset(uint8_t offset)
 {
     menuTemperatureOffset = offset;
 }
 
-void MenuSetHumidityOffset(uint8_t offset)
+void MenuSetupHumidityOffset(uint8_t offset)
 {
     menuHumidityOffset = offset;
 }
@@ -75,17 +75,17 @@ uint8_t mui_save_values(mui_t *ui, uint8_t msg)
 {
     if (msg == MUIF_MSG_FORM_START)
     {
-        if (MenuSendIsRGBLightOn != nullptr)
+        if (MenuRGBLightToggleFunc != nullptr)
         {
-            MenuSendIsRGBLightOn(menuRGBLightOn);
+            MenuRGBLightToggleFunc(menuRGBLightOn);
         }
-        if (MenuSendTemperatureOffset != nullptr)
+        if (MenuChangeTemperatureOffsetFunc != nullptr)
         {
-            MenuSendTemperatureOffset(menuTemperatureOffset);
+            MenuChangeTemperatureOffsetFunc(menuTemperatureOffset);
         }
-        if (MenuSendHumidityOffset != nullptr)
+        if (MenuChangeHumidityOffsetFunc != nullptr)
         {
-            MenuSendHumidityOffset(menuHumidityOffset);
+            MenuChangeHumidityOffsetFunc(menuHumidityOffset);
         }
 
         Serial.println("save values from menu");
@@ -151,7 +151,7 @@ fds_t fdsData[] =
     MUI_FORM(1)
         MUI_AUX("SV")
             MUI_STYLE(1)
-                MUI_LABEL(5, 10, "Aben Fan")
+                MUI_LABEL(5, 10, "Aben Fan Pro")
                     MUI_XY("HR", 0, 13)
                         MUI_STYLE(0)
                             MUI_DATA("GP",
@@ -295,7 +295,7 @@ void Menu::loop(std::function<void()> whenFormInactiveFunc)
             pos = _mui.getCurrentCursorFocusPosition();
             if (formId == 1 && pos == 3)
             {
-                MenuIsClosed();
+                MenuWhenWasClosed();
                 _mui.leaveForm();
                 break;
             }

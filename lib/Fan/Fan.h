@@ -1,4 +1,5 @@
 #ifndef __FAN_H_
+#define __FAN_H_
 
 #include <functional>
 

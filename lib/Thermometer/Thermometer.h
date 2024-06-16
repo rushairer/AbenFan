@@ -1,4 +1,5 @@
 #ifndef __THERMOMETER_H_
+#define __THERMOMETER_H_
 
 #include <AHT20.h>
 #include <Preferences.h>

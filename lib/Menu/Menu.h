@@ -1,23 +1,23 @@
 #ifndef __MENU_H_
+#define __MENU_H_
+
 #include <U8g2lib.h>
 #include <MUIU8g2.h>
 #include <functional>
 
 #define VERSION "1.0.0"
 
-void MenuDinoRunFunc();
-void MenuDinoUltramanRunFunc();
-void MenuTurnOffFunc();
-void MenuIsClosed();
+extern std::function<void()> MenuDinoRunFunc;
+extern std::function<void()> MenuDinoUltramanRunFunc;
+extern std::function<void()> MenuTurnOffFunc;
+extern std::function<void()> MenuWhenWasClosed;
+extern std::function<void(uint8_t)> MenuRGBLightToggleFunc;
+extern std::function<void(uint8_t)> MenuChangeTemperatureOffsetFunc;
+extern std::function<void(uint8_t)> MenuChangeHumidityOffsetFunc;
 
-void MenuSendIsRGBLightOn(uint8_t);
-void MenuSetRGBLightOn(uint8_t);
-
-void MenuSendTemperatureOffset(uint8_t offset);
-void MenuSetTemperatureOffset(uint8_t offset);
-
-void MenuSendHumidityOffset(uint8_t offset);
-void MenuSetHumidityOffset(uint8_t offset);
+void MenuSetupRGBLightOn(uint8_t);
+void MenuSetupHumidityOffset(uint8_t offset);
+void MenuSetupTemperatureOffset(uint8_t offset);
 
 class Menu
 {

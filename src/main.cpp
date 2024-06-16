@@ -4,11 +4,17 @@
 #include <AHT20.h>
 #include <Adafruit_NeoPixel.h>
 
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+
+#include "actions.h"
 #include "Thermometer.h"
 #include "Fan.h"
 #include "RGBLed.h"
 #include "dino_game_arduino.h"
 #include "Menu.h"
+#include "BLE.h"
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -45,6 +51,11 @@
 #define DEFAULT_TEMPERATURE_OFFSET -2.0
 #define DEFAULT_HUMIDITY_OFFSET -4.0
 
+#define APP_NAME "Aben Fan Pro"
+#define BLE_SERVICE_UUID "D8A1B000-0A3C-4996-9E60-832EB8CF6EF8"
+#define BLE_TX_CHARACTERISTIC_UUID "D8A1B001-0A3C-4996-9E60-832EB8CF6EF8"
+#define BLE_RX_CHARACTERISTIC_UUID "D8A1B002-0A3C-4996-9E60-832EB8CF6EF8"
+
 typedef enum
 {
     ABENFAN_SCENE_WELCOME = 0,
@@ -68,6 +79,8 @@ DinoGameArduino dinoGameArduino(&u8g2);
 
 Menu menu(&u8g2);
 
+BLE ble(APP_NAME, BLE_SERVICE_UUID, BLE_TX_CHARACTERISTIC_UUID, BLE_RX_CHARACTERISTIC_UUID);
+
 int i = 10;
 int buttonTimer = 0;
 
@@ -76,6 +89,8 @@ uint8_t inDinoRun = 0;
 AbenFanScene currentScene = ABENFAN_SCENE_WELCOME;
 
 void whenFormInactiveFunc();
+
+extern std::function<void()> MenuDinoRunFunc;
 
 void setup()
 {
@@ -108,9 +123,11 @@ void setup()
 
     // menu
     menu.setup();
-    MenuSetRGBLightOn(rgbLed.isOn());
-    MenuSetTemperatureOffset(uint8_t(thermometer.getTemperatureOffset() + 5));
-    MenuSetHumidityOffset(uint8_t(thermometer.getHumidityOffset() + 5));
+    MenuSetupRGBLightOn(rgbLed.isOn());
+    MenuSetupTemperatureOffset(uint8_t(thermometer.getTemperatureOffset() + 5));
+    MenuSetupHumidityOffset(uint8_t(thermometer.getHumidityOffset() + 5));
+
+    ble.setup();
 }
 
 void loop()
@@ -118,45 +135,7 @@ void loop()
     thermometer.loop();
     fan.loop();
     menu.loop(whenFormInactiveFunc);
-}
-
-void MenuDinoRunFunc()
-{
-    dinoGameArduino.setup();
-    currentScene = ABENFAN_SCENE_DINORUN;
-}
-
-void MenuDinoUltramanRunFunc()
-{
-    dinoGameArduino.setup();
-    dinoGameArduino.showUltraman();
-    currentScene = ABENFAN_SCENE_DINOULTRAMANRUN;
-}
-
-void MenuTurnOffFunc()
-{
-    digitalWrite(OFF_PIN, LOW);
-    delay(1000);
-}
-
-void MenuSendIsRGBLightOn(uint8_t on)
-{
-    rgbLed.toggle(on);
-}
-
-void MenuSendTemperatureOffset(uint8_t offset)
-{
-    thermometer.setTemperatureOffset(float(offset) - 5.0);
-}
-
-void MenuSendHumidityOffset(uint8_t offset)
-{
-    thermometer.setHumidityOffset(float(offset) - 5.0);
-}
-
-void MenuIsClosed()
-{
-    currentScene = ABENFAN_SCENE_WELCOME;
+    ble.loop();
 }
 
 void whenFormInactiveFunc()
@@ -244,3 +223,50 @@ void whenFormInactiveFunc()
         } while (u8g2.nextPage());
     }
 }
+
+// Actions
+void ActionStartDinoRun()
+{
+    dinoGameArduino.setup();
+    currentScene = ABENFAN_SCENE_DINORUN;
+}
+
+void ActionStartDinoUltramanRun()
+{
+    dinoGameArduino.setup();
+    dinoGameArduino.showUltraman();
+    currentScene = ABENFAN_SCENE_DINOULTRAMANRUN;
+}
+
+void ActionTurnOff()
+{
+    digitalWrite(OFF_PIN, LOW);
+    delay(1000);
+}
+
+void ActionToggleRGBLight(uint8_t on)
+{
+    rgbLed.toggle(on);
+}
+
+void ActionChangeTemperatureOffset(uint8_t offset)
+{
+    thermometer.setTemperatureOffset(float(offset) - 5.0);
+}
+
+void ActionChangeHumidityOffset(uint8_t offset)
+{
+    thermometer.setHumidityOffset(float(offset) - 5.0);
+}
+
+// Menu Actions
+std::function<void()> MenuDinoRunFunc = ActionStartDinoRun;
+std::function<void()> MenuDinoUltramanRunFunc = ActionStartDinoUltramanRun;
+std::function<void()> MenuTurnOffFunc = ActionTurnOff;
+std::function<void(uint8_t)> MenuRGBLightToggleFunc = ActionToggleRGBLight;
+std::function<void(uint8_t)> MenuChangeTemperatureOffsetFunc = ActionChangeTemperatureOffset;
+std::function<void(uint8_t)> MenuChangeHumidityOffsetFunc = ActionChangeHumidityOffset;
+std::function<void()> MenuWhenWasClosed = []()
+{
+    currentScene = ABENFAN_SCENE_WELCOME;
+};
