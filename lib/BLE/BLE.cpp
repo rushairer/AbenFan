@@ -11,7 +11,9 @@ BLE::BLE(
       _rxCharacteristicUUID(rxCharacteristicUUID),
       _connecting(false),
       _connected(false),
-      _working(false)
+      _working(false),
+      _on(false),
+      _preferences()
 {
 }
 
@@ -21,7 +23,11 @@ BLE::~BLE()
 
 void BLE::setup()
 {
-    Serial.println("Starting BLE work!");
+    _preferences.begin("ble", true);
+    _on = _preferences.getBool("on", true);
+    _preferences.end();
+
+    Serial.println("Setup BLE work!");
     BLEDevice::init(_name);
 
     _server = BLEDevice::createServer();
@@ -62,6 +68,25 @@ void BLE::stop()
 
 void BLE::loop()
 {
+    Serial.println("BLE:");
+    Serial.println(_working ? "working" : "not work");
+    Serial.println(_on ? "on" : "off");
+
+    if (_on)
+    {
+        if (!_working)
+        {
+            start();
+        }
+    }
+    else
+    {
+        if (_working)
+        {
+            stop();
+        }
+    }
+
     if (!_working)
     {
         return;
@@ -109,6 +134,19 @@ void BLE::onConnect(BLEServer *server)
 void BLE::onDisconnect(BLEServer *server)
 {
     _connecting = false;
+}
+
+bool BLE::isOn()
+{
+    return _on;
+}
+
+void BLE::toggle(bool on)
+{
+    _on = on;
+    _preferences.begin("ble", false);
+    _preferences.putBool("on", _on);
+    _preferences.end();
 }
 
 void BLE::onWrite(BLECharacteristic *characteristic, esp_ble_gatts_cb_param_t *param)

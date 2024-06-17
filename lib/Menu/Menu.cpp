@@ -1,8 +1,12 @@
 #include "Menu.h"
 
+#define MUI_TITLE(text) MUI_STYLE(1) MUI_LABEL(5, 10, text) MUI_XY("HR", 0, 13) MUI_STYLE(0)
+#define MUI_LISTBUTTONS(id) MUI_XYA(id, 5, 25, 0) MUI_XYA(id, 5, 37, 1) MUI_XYA(id, 5, 49, 2) MUI_XYA(id, 5, 61, 3)
+
 uint8_t menuRGBLightOn = 1;
 uint8_t menuTemperatureOffsetIndex = 5;
 uint8_t menuHumidityOffsetIndex = 5;
+uint8_t menuBLEOn = 0;
 
 void MenuSetupRGBLightOn(uint8_t on)
 {
@@ -29,8 +33,12 @@ uint8_t MenuThermometerOffsetIndexToValue(uint8_t index)
     return index - 5;
 }
 
-uint8_t
-mui_hrule(mui_t *ui, uint8_t msg)
+void MenuSetupBLEOn(uint8_t on)
+{
+    menuBLEOn = on;
+}
+
+uint8_t muiHrule(mui_t *ui, uint8_t msg)
 {
     u8g2_t *u8g2 = mui_get_U8g2(ui);
     switch (msg)
@@ -42,7 +50,7 @@ mui_hrule(mui_t *ui, uint8_t msg)
     return 0;
 }
 
-uint8_t mui_start_dino_run(mui_t *ui, uint8_t msg)
+uint8_t muiStartDinoRun(mui_t *ui, uint8_t msg)
 {
     if (msg == MUIF_MSG_FORM_START)
     {
@@ -55,7 +63,7 @@ uint8_t mui_start_dino_run(mui_t *ui, uint8_t msg)
     return 0;
 }
 
-uint8_t mui_start_dino_ultraman_run(mui_t *ui, uint8_t msg)
+uint8_t muiStartDinoUltramanRun(mui_t *ui, uint8_t msg)
 {
     if (msg == MUIF_MSG_FORM_START)
     {
@@ -68,7 +76,7 @@ uint8_t mui_start_dino_ultraman_run(mui_t *ui, uint8_t msg)
     return 0;
 }
 
-uint8_t mui_turn_off(mui_t *ui, uint8_t msg)
+uint8_t muiTurnOff(mui_t *ui, uint8_t msg)
 {
     if (msg == MUIF_MSG_FORM_START)
     {
@@ -81,7 +89,7 @@ uint8_t mui_turn_off(mui_t *ui, uint8_t msg)
     return 0;
 }
 
-uint8_t mui_save_values(mui_t *ui, uint8_t msg)
+uint8_t muiSaveValues(mui_t *ui, uint8_t msg)
 {
     if (msg == MUIF_MSG_FORM_START)
     {
@@ -96,6 +104,10 @@ uint8_t mui_save_values(mui_t *ui, uint8_t msg)
         if (MenuChangeHumidityOffsetFunc != nullptr)
         {
             MenuChangeHumidityOffsetFunc(MenuThermometerOffsetIndexToValue(menuHumidityOffsetIndex));
+        }
+        if (MenuToggleBLEFunc != nullptr)
+        {
+            MenuToggleBLEFunc(menuBLEOn);
         }
 
         Serial.println("save values from menu");
@@ -117,7 +129,7 @@ muif_t muifList[] = {
     MUIF_U8G2_FONT_STYLE(3, u8g2_font_streamline_food_drink_t),
 
     /* horizontal line (hrule) */
-    MUIF_RO("HR", mui_hrule),
+    MUIF_RO("HR", muiHrule),
 
     /* main menu */
     MUIF_RO("GP", mui_u8g2_goto_data),
@@ -134,17 +146,18 @@ muif_t muifList[] = {
 
     // games
     MUIF_RO("LG", mui_u8g2_goto_data),
+
     // save values
-    MUIF_RO("SV", mui_save_values),
+    MUIF_RO("SV", muiSaveValues),
 
     // Dino Run
-    MUIF_RO("DR", mui_start_dino_run),
+    MUIF_RO("DR", muiStartDinoRun),
 
     // Dino Ultraman Run
-    MUIF_RO("DU", mui_start_dino_ultraman_run),
+    MUIF_RO("DU", muiStartDinoUltramanRun),
 
     // Turn Off
-    MUIF_RO("TO", mui_turn_off),
+    MUIF_RO("TO", muiTurnOff),
 
     // rgb light on
     MUIF_VARIABLE("IO", &menuRGBLightOn, mui_u8g2_u8_opt_line_wa_mse_pi),
@@ -155,92 +168,24 @@ muif_t muifList[] = {
     // humidity Offset
     MUIF_VARIABLE("IH", &menuHumidityOffsetIndex, mui_u8g2_u8_opt_line_wa_mse_pi),
 
+    // BLE
+    MUIF_VARIABLE("IB", &menuBLEOn, mui_u8g2_u8_opt_line_wa_mse_pi),
+
 };
 
 fds_t fdsData[] =
-    MUI_FORM(1)
-        MUI_AUX("SV")
-            MUI_STYLE(1)
-                MUI_LABEL(5, 10, "Aben Fan Pro")
-                    MUI_XY("HR", 0, 13)
-                        MUI_STYLE(0)
-                            MUI_DATA("GP",
-                                     MUI_10 "Turn Off|" MUI_20 "Games|" MUI_30 "RGB Light|" MUI_40 "Settings|")
-                                MUI_XYA("GC", 5, 25, 0)
-                                    MUI_XYA("GC", 5, 37, 1)
-                                        MUI_XYA("GC", 5, 49, 2)
-                                            MUI_XYA("GC", 5, 61, 3)
+    MUI_FORM(1) MUI_AUX("SV") MUI_TITLE("Aben Fan Pro") MUI_DATA("GP", MUI_10 "Turn Off|" MUI_20 "Games|" MUI_30 "RGB Light|" MUI_40 "Settings|") MUI_LISTBUTTONS("GC")
+        MUI_FORM(10) MUI_AUX("TO")
+            MUI_FORM(20) MUI_TITLE("Games") MUI_DATA("LG", MUI_1 "Goto Main Menu|" MUI_21 "Dino Run|" MUI_22 "Dino Ultraman|" MUI_23 "Street Fighter|") MUI_LISTBUTTONS("GC")
+                MUI_FORM(21) MUI_AUX("DR")
+                    MUI_FORM(22) MUI_AUX("DU")
+                        MUI_FORM(23) MUI_STYLE(1) MUI_LABEL(5, 10, "Street Fighter") MUI_XY("HR", 0, 13) MUI_STYLE(0) MUI_LABEL(5, 29, "Coming soon...") MUI_XYAT("G1", 64, 59, 20, " OK ")
+                            MUI_FORM(30) MUI_TITLE("RGB Light") MUI_LABEL(5, 29, "Turn:") MUI_XYAT("IO", 60, 29, 60, "Off|On") MUI_XYAT("G1", 64, 59, 1, " OK ")
 
-                                                MUI_FORM(10)
-                                                    MUI_AUX("TO")
-
-                                                        MUI_FORM(20)
-                                                            MUI_STYLE(1)
-                                                                MUI_LABEL(5, 10, "Games")
-                                                                    MUI_XY("HR", 0, 13)
-                                                                        MUI_STYLE(0)
-                                                                            MUI_DATA("LG",
-                                                                                     MUI_1 "Goto Main Menu|" MUI_21 "Dino Run|" MUI_22 "Dino Ultraman|" MUI_23 "Street Fighter|")
-                                                                                MUI_XYA("GC", 5, 25, 0)
-                                                                                    MUI_XYA("GC", 5, 37, 1)
-                                                                                        MUI_XYA("GC", 5, 49, 2)
-                                                                                            MUI_XYA("GC", 5, 61, 3)
-
-                                                                                                MUI_FORM(21)
-                                                                                                    MUI_AUX("DR")
-
-                                                                                                        MUI_FORM(23)
-                                                                                                            MUI_STYLE(1)
-                                                                                                                MUI_LABEL(5, 10, "Street Fighter")
-                                                                                                                    MUI_XY("HR", 0, 13)
-                                                                                                                        MUI_STYLE(0)
-                                                                                                                            MUI_LABEL(5, 29, "Coming soon...")
-                                                                                                                                MUI_XYAT("G1", 64, 59, 20, " OK ")
-
-                                                                                                                                    MUI_FORM(22)
-                                                                                                                                        MUI_AUX("DU")
-
-                                                                                                                                            MUI_FORM(30)
-                                                                                                                                                MUI_STYLE(1)
-                                                                                                                                                    MUI_LABEL(5, 10, "RGB Light")
-                                                                                                                                                        MUI_XY("HR", 0, 13)
-                                                                                                                                                            MUI_STYLE(0)
-                                                                                                                                                                MUI_LABEL(5, 29, "Turn:")
-                                                                                                                                                                    MUI_XYAT("IO", 60, 29, 60, "Off|On")
-                                                                                                                                                                        MUI_XYAT("G1", 64, 59, 1, " OK ")
-
-                                                                                                                                                                            MUI_FORM(40)
-                                                                                                                                                                                MUI_AUX("SV")
-                                                                                                                                                                                    MUI_STYLE(1)
-                                                                                                                                                                                        MUI_LABEL(5, 10, "Settings")
-                                                                                                                                                                                            MUI_XY("HR", 0, 13)
-                                                                                                                                                                                                MUI_STYLE(0)
-                                                                                                                                                                                                    MUI_DATA("LG",
-                                                                                                                                                                                                             MUI_1 "Goto Main Menu|" MUI_41 "Thermometer Offset|" MUI_42 "Wi-Fi|" MUI_43 "Bluetooth|" MUI_99 "Version|")
-                                                                                                                                                                                                        MUI_XYA("GC", 5, 25, 0)
-                                                                                                                                                                                                            MUI_XYA("GC", 5, 37, 1)
-                                                                                                                                                                                                                MUI_XYA("GC", 5, 49, 2)
-                                                                                                                                                                                                                    MUI_XYA("GC", 5, 61, 3)
-
-                                                                                                                                                                                                                        MUI_FORM(41)
-                                                                                                                                                                                                                            MUI_STYLE(1)
-                                                                                                                                                                                                                                MUI_LABEL(5, 10, "Thermometer Offset")
-                                                                                                                                                                                                                                    MUI_XY("HR", 0, 13)
-                                                                                                                                                                                                                                        MUI_STYLE(0)
-                                                                                                                                                                                                                                            MUI_LABEL(5, 27, "Temp. Offset:")
-                                                                                                                                                                                                                                                MUI_XYAT("IT", 76, 27, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5")
-                                                                                                                                                                                                                                                    MUI_XY("DT", 100, 27)
-                                                                                                                                                                                                                                                        MUI_LABEL(5, 41, "Hum. Offset:")
-                                                                                                                                                                                                                                                            MUI_XYAT("IH", 76, 41, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5")
-                                                                                                                                                                                                                                                                MUI_XYAT("G1", 64, 59, 40, " OK ")
-
-                                                                                                                                                                                                                                                                    MUI_FORM(99)
-                                                                                                                                                                                                                                                                        MUI_STYLE(1)
-                                                                                                                                                                                                                                                                            MUI_LABEL(5, 10, "Version")
-                                                                                                                                                                                                                                                                                MUI_XY("HR", 0, 13)
-                                                                                                                                                                                                                                                                                    MUI_STYLE(0)
-                                                                                                                                                                                                                                                                                        MUI_LABEL(5, 29, VERSION)
-                                                                                                                                                                                                                                                                                            MUI_XYAT("G1", 64, 59, 40, " OK ")
+                                MUI_FORM(40) MUI_AUX("SV") MUI_TITLE("Settings") MUI_DATA("LG", MUI_1 "Goto Main Menu|" MUI_41 "Thermometer Offset|" MUI_42 "Wi-Fi|" MUI_43 "Bluetooth|" MUI_99 "Version|") MUI_LISTBUTTONS("GC")
+                                    MUI_FORM(41) MUI_TITLE("Thermometer Offset") MUI_LABEL(5, 27, "Temp. Offset:") MUI_XYAT("IT", 76, 27, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5") MUI_XY("DT", 100, 27) MUI_LABEL(5, 41, "Hum. Offset:") MUI_XYAT("IH", 76, 41, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5") MUI_XYAT("G1", 64, 59, 40, " OK ")
+                                        MUI_FORM(43) MUI_TITLE("Bluetooth") MUI_LABEL(5, 29, "Turn:") MUI_XYAT("IB", 60, 29, 60, "Off|On") MUI_XYAT("G1", 64, 59, 40, " OK ")
+                                            MUI_FORM(99) MUI_TITLE("Version") MUI_LABEL(5, 29, VERSION) MUI_XYAT("G1", 64, 59, 40, " OK ")
 
     ;
 
@@ -281,7 +226,6 @@ void Menu::loop(std::function<void()> whenFormInactiveFunc)
 {
     if (_mui.isFormActive())
     {
-
         if (_isReDraw)
         {
 

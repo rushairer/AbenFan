@@ -121,16 +121,17 @@ void setup()
     u8g2.begin(BUTTON1_PIN, BUTTON2_PIN, U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE, U8X8_PIN_NONE);
     u8g2.setFontMode(1);
 
+    // ble
+    ble.setup();
+    ble.setBLEGetValueToSend(bleGetValueToSend);
+    ble.setBLEWhenReceivedValue(bleWhenReceivedValue);
+
     // menu
     menu.setup();
     MenuSetupRGBLightOn(rgbLed.isOn());
     MenuSetupTemperatureOffset(uint8_t(thermometer.getTemperatureOffset()));
     MenuSetupHumidityOffset(uint8_t(thermometer.getHumidityOffset()));
-
-    ble.setup();
-    ble.setBLEGetValueToSend(bleGetValueToSend);
-    ble.setBLEWhenReceivedValue(bleWhenReceivedValue);
-    ble.start();
+    MenuSetupBLEOn(ble.isOn());
 }
 
 void loop()
@@ -258,6 +259,12 @@ void whenFormInactiveFunc()
                 sprintf(words, "%.1fRH", thermometer.getHumidity());
                 u8g2.drawStr(50, 54, words);
             }
+
+            if (ble.isOn())
+            {
+                u8g2.setFont(u8g2_font_open_iconic_embedded_1x_t);
+                u8g2.drawGlyph(120, 10, 74);
+            }
         } while (u8g2.nextPage());
     }
 }
@@ -297,6 +304,11 @@ void ActionChangeHumidityOffset(uint8_t offset)
     thermometer.setHumidityOffset(float(offset));
 }
 
+void ActionToggleBLE(uint8_t on)
+{
+    ble.toggle(on);
+}
+
 // Menu Actions
 std::function<void()> MenuDinoRunFunc = ActionStartDinoRun;
 std::function<void()> MenuDinoUltramanRunFunc = ActionStartDinoUltramanRun;
@@ -308,3 +320,4 @@ std::function<void()> MenuWhenWasClosed = []()
 {
     currentScene = ABENFAN_SCENE_WELCOME;
 };
+std::function<void(uint8_t)> MenuToggleBLEFunc = ActionToggleBLE;

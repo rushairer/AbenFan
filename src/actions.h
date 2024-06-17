@@ -9,5 +9,6 @@ void ActionTurnOff();
 void ActionToggleRGBLight(uint8_t on);
 void ActionChangeTemperatureOffset(uint8_t offset);
 void ActionChangeHumidityOffset(uint8_t offset);
+void ActionToggleBLE(uint8_t on);
 
 #endif // !__ACTIONS_H_

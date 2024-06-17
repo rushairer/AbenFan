@@ -7,6 +7,7 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
+#include <Preferences.h>
 
 class BLE : public BLEServerCallbacks, BLECharacteristicCallbacks
 {
@@ -34,6 +35,8 @@ public:
     bool isConnected();
     bool isWorking();
     bool isWaiting();
+    void toggle(bool on);
+    bool isOn();
 
     void setBLEWhenReceivedValue(std::function<void(std::string)> bleWhenReceivedValue);
     void setBLEGetValueToSend(std::function<std::string()> bleGetValueToSend);
@@ -46,6 +49,8 @@ protected:
     bool _connecting;
     bool _connected;
     bool _working;
+    bool _on;
+
     BLEServer *_server;
     BLEService *_service;
     BLECharacteristic *_txCharacteristic;
@@ -53,6 +58,7 @@ protected:
 
     std::function<void(std::string)> _bleWhenReceivedValue;
     std::function<std::string()> _bleGetValueToSend;
+    Preferences _preferences;
 };
 
 #endif // !__BLE_H_
