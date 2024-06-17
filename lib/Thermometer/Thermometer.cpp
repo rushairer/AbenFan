@@ -100,6 +100,10 @@ float Thermometer::getHumidityOffset()
 void Thermometer::setTemperatureOffset(float temperatureOffset)
 {
     _temperatureOffset = temperatureOffset;
+    if (_temperatureOffset > 5 || _temperatureOffset < -5)
+    {
+        _temperatureOffset = 0;
+    }
     _preferences.begin("thermometer", false);
     _preferences.putFloat("toffset", _temperatureOffset);
     _preferences.end();
@@ -110,6 +114,10 @@ void Thermometer::setTemperatureOffset(float temperatureOffset)
 void Thermometer::setHumidityOffset(float humidityOffset)
 {
     _humidityOffset = humidityOffset;
+    if (_humidityOffset > 5 || _humidityOffset < -5)
+    {
+        _humidityOffset = 0;
+    }
     _preferences.begin("thermometer", false);
     _preferences.putFloat("hoffset", _humidityOffset);
     _preferences.end();

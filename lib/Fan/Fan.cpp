@@ -47,6 +47,29 @@ void Fan::loop()
     ledcWrite(_channel, _speed);
 }
 
+void Fan::setLevel(uint8_t level)
+{
+    _level = level;
+    switch (_level)
+    {
+    case 1:
+        _speed = _speedOfLevel1;
+        break;
+    case 2:
+        _speed = _speedOfLevel2;
+        break;
+    case 3:
+        _speed = _speedOfLevel3;
+        break;
+    case 4:
+        _speed = _speedOfLevel4;
+        break;
+    case 0:
+        _speed = 0;
+        break;
+    }
+}
+
 void Fan::nextLevel()
 {
     switch (_level)

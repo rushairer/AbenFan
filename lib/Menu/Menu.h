@@ -12,8 +12,8 @@ extern std::function<void()> MenuDinoUltramanRunFunc;
 extern std::function<void()> MenuTurnOffFunc;
 extern std::function<void()> MenuWhenWasClosed;
 extern std::function<void(uint8_t)> MenuRGBLightToggleFunc;
-extern std::function<void(uint8_t)> MenuChangeTemperatureOffsetFunc;
-extern std::function<void(uint8_t)> MenuChangeHumidityOffsetFunc;
+extern std::function<void(int8_t)> MenuChangeTemperatureOffsetFunc;
+extern std::function<void(int8_t)> MenuChangeHumidityOffsetFunc;
 extern std::function<void(uint8_t)> MenuToggleBLEFunc;
 
 void MenuSetupRGBLightOn(uint8_t);
@@ -21,8 +21,8 @@ void MenuSetupHumidityOffset(uint8_t offset);
 void MenuSetupTemperatureOffset(uint8_t offset);
 void MenuSetupBLEOn(uint8_t);
 
-uint8_t MenuThermometerOffsetValueToIndex(uint8_t value);
-uint8_t MenuThermometerOffsetIndexToValue(uint8_t index);
+uint8_t menuThermometerOffsetValueToIndex(int8_t value);
+int8_t menuThermometerOffsetIndexToValue(uint8_t index);
 
 class Menu
 {

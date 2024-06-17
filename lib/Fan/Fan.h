@@ -25,6 +25,7 @@ public:
     uint32_t getSpeed();
     uint8_t getLevel();
     void nextLevel();
+    void setLevel(uint8_t level);
 
 protected:
     uint32_t _speed;

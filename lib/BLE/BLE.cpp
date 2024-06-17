@@ -68,10 +68,6 @@ void BLE::stop()
 
 void BLE::loop()
 {
-    Serial.println("BLE:");
-    Serial.println(_working ? "working" : "not work");
-    Serial.println(_on ? "on" : "off");
-
     if (_on)
     {
         if (!_working)
@@ -160,8 +156,9 @@ void BLE::onWrite(BLECharacteristic *characteristic, esp_ble_gatts_cb_param_t *p
         {
             Serial.print(value[i]);
         }
+        Serial.print("\r\n");
 
-        characteristic->setValue("received");
+        characteristic->setValue("received:" + value);
         characteristic->notify();
 
         if (_bleWhenReceivedValue != nullptr)

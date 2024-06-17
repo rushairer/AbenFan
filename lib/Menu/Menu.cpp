@@ -15,20 +15,20 @@ void MenuSetupRGBLightOn(uint8_t on)
 
 void MenuSetupTemperatureOffset(uint8_t offset)
 {
-    menuTemperatureOffsetIndex = MenuThermometerOffsetValueToIndex(offset);
+    menuTemperatureOffsetIndex = menuThermometerOffsetValueToIndex(offset);
 }
 
 void MenuSetupHumidityOffset(uint8_t offset)
 {
-    menuHumidityOffsetIndex = MenuThermometerOffsetValueToIndex(offset);
+    menuHumidityOffsetIndex = menuThermometerOffsetValueToIndex(offset);
 }
 
-uint8_t MenuThermometerOffsetValueToIndex(uint8_t value)
+uint8_t menuThermometerOffsetValueToIndex(int8_t value)
 {
     return value + 5;
 }
 
-uint8_t MenuThermometerOffsetIndexToValue(uint8_t index)
+int8_t menuThermometerOffsetIndexToValue(uint8_t index)
 {
     return index - 5;
 }
@@ -99,11 +99,11 @@ uint8_t muiSaveValues(mui_t *ui, uint8_t msg)
         }
         if (MenuChangeTemperatureOffsetFunc != nullptr)
         {
-            MenuChangeTemperatureOffsetFunc(MenuThermometerOffsetIndexToValue(menuTemperatureOffsetIndex));
+            MenuChangeTemperatureOffsetFunc(menuThermometerOffsetIndexToValue(menuTemperatureOffsetIndex));
         }
         if (MenuChangeHumidityOffsetFunc != nullptr)
         {
-            MenuChangeHumidityOffsetFunc(MenuThermometerOffsetIndexToValue(menuHumidityOffsetIndex));
+            MenuChangeHumidityOffsetFunc(menuThermometerOffsetIndexToValue(menuHumidityOffsetIndex));
         }
         if (MenuToggleBLEFunc != nullptr)
         {
