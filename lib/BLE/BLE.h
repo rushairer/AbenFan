@@ -21,11 +21,22 @@ public:
     void setup();
     void loop();
 
+    void start();
+    void stop();
+
     void onConnect(BLEServer *server);
     void onDisconnect(BLEServer *server);
 
     void onWrite(BLECharacteristic *characteristic, esp_ble_gatts_cb_param_t *param);
     void onRead(BLECharacteristic *characteristic, esp_ble_gatts_cb_param_t *param);
+
+    bool isConnecting();
+    bool isConnected();
+    bool isWorking();
+    bool isWaiting();
+
+    void setBLEWhenReceivedValue(std::function<void(std::string)> bleWhenReceivedValue);
+    void setBLEGetValueToSend(std::function<std::string()> bleGetValueToSend);
 
 protected:
     const char *_name;
@@ -34,10 +45,14 @@ protected:
     const char *_rxCharacteristicUUID;
     bool _connecting;
     bool _connected;
+    bool _working;
     BLEServer *_server;
     BLEService *_service;
     BLECharacteristic *_txCharacteristic;
     BLECharacteristic *_rxCharacteristic;
+
+    std::function<void(std::string)> _bleWhenReceivedValue;
+    std::function<std::string()> _bleGetValueToSend;
 };
 
 #endif // !__BLE_H_

@@ -3,7 +3,7 @@
 #include <MUIU8g2.h>
 #include <AHT20.h>
 #include <Adafruit_NeoPixel.h>
-
+#include <ArduinoJson.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
@@ -89,8 +89,8 @@ uint8_t inDinoRun = 0;
 AbenFanScene currentScene = ABENFAN_SCENE_WELCOME;
 
 void whenFormInactiveFunc();
-
-extern std::function<void()> MenuDinoRunFunc;
+std::string bleGetValueToSend();
+void bleWhenReceivedValue(std::string value);
 
 void setup()
 {
@@ -124,10 +124,13 @@ void setup()
     // menu
     menu.setup();
     MenuSetupRGBLightOn(rgbLed.isOn());
-    MenuSetupTemperatureOffset(uint8_t(thermometer.getTemperatureOffset() + 5));
-    MenuSetupHumidityOffset(uint8_t(thermometer.getHumidityOffset() + 5));
+    MenuSetupTemperatureOffset(uint8_t(thermometer.getTemperatureOffset()));
+    MenuSetupHumidityOffset(uint8_t(thermometer.getHumidityOffset()));
 
     ble.setup();
+    ble.setBLEGetValueToSend(bleGetValueToSend);
+    ble.setBLEWhenReceivedValue(bleWhenReceivedValue);
+    ble.start();
 }
 
 void loop()
@@ -136,6 +139,41 @@ void loop()
     fan.loop();
     menu.loop(whenFormInactiveFunc);
     ble.loop();
+}
+
+std::string bleGetValueToSend()
+{
+    std::string value;
+    JsonDocument jsonData;
+    JsonObject fanObj = jsonData["fan"].to<JsonObject>();
+    fanObj["level"] = fan.getLevel();
+    JsonObject thermometerObj = jsonData["thermometer"].to<JsonObject>();
+    thermometerObj["temperature"] = thermometer.getTemperature();
+    thermometerObj["humidity"] = thermometer.getHumidity();
+    thermometerObj["temperature_offset"] = thermometer.getTemperatureOffset();
+    thermometerObj["humidity_offset"] = thermometer.getHumidityOffset();
+    JsonObject rgbLightObj = jsonData["rgb_light"].to<JsonObject>();
+    rgbLightObj["on"] = rgbLed.isOn();
+
+    serializeJson(jsonData, value);
+
+    return value;
+}
+
+void bleWhenReceivedValue(std::string value)
+{
+    if (value == "next")
+    {
+        fan.nextLevel();
+    }
+    else if (value == "rgb_on")
+    {
+        rgbLed.toggle(true);
+    }
+    else if (value == "rgb_off")
+    {
+        rgbLed.toggle(false);
+    }
 }
 
 void whenFormInactiveFunc()
@@ -251,12 +289,12 @@ void ActionToggleRGBLight(uint8_t on)
 
 void ActionChangeTemperatureOffset(uint8_t offset)
 {
-    thermometer.setTemperatureOffset(float(offset) - 5.0);
+    thermometer.setTemperatureOffset(float(offset));
 }
 
 void ActionChangeHumidityOffset(uint8_t offset)
 {
-    thermometer.setHumidityOffset(float(offset) - 5.0);
+    thermometer.setHumidityOffset(float(offset));
 }
 
 // Menu Actions

@@ -1,8 +1,8 @@
 #include "Menu.h"
 
 uint8_t menuRGBLightOn = 1;
-uint8_t menuTemperatureOffset = 5;
-uint8_t menuHumidityOffset = 5;
+uint8_t menuTemperatureOffsetIndex = 5;
+uint8_t menuHumidityOffsetIndex = 5;
 
 void MenuSetupRGBLightOn(uint8_t on)
 {
@@ -11,12 +11,22 @@ void MenuSetupRGBLightOn(uint8_t on)
 
 void MenuSetupTemperatureOffset(uint8_t offset)
 {
-    menuTemperatureOffset = offset;
+    menuTemperatureOffsetIndex = MenuThermometerOffsetValueToIndex(offset);
 }
 
 void MenuSetupHumidityOffset(uint8_t offset)
 {
-    menuHumidityOffset = offset;
+    menuHumidityOffsetIndex = MenuThermometerOffsetValueToIndex(offset);
+}
+
+uint8_t MenuThermometerOffsetValueToIndex(uint8_t value)
+{
+    return value + 5;
+}
+
+uint8_t MenuThermometerOffsetIndexToValue(uint8_t index)
+{
+    return index - 5;
 }
 
 uint8_t
@@ -81,11 +91,11 @@ uint8_t mui_save_values(mui_t *ui, uint8_t msg)
         }
         if (MenuChangeTemperatureOffsetFunc != nullptr)
         {
-            MenuChangeTemperatureOffsetFunc(menuTemperatureOffset);
+            MenuChangeTemperatureOffsetFunc(MenuThermometerOffsetIndexToValue(menuTemperatureOffsetIndex));
         }
         if (MenuChangeHumidityOffsetFunc != nullptr)
         {
-            MenuChangeHumidityOffsetFunc(menuHumidityOffset);
+            MenuChangeHumidityOffsetFunc(MenuThermometerOffsetIndexToValue(menuHumidityOffsetIndex));
         }
 
         Serial.println("save values from menu");
@@ -140,10 +150,10 @@ muif_t muifList[] = {
     MUIF_VARIABLE("IO", &menuRGBLightOn, mui_u8g2_u8_opt_line_wa_mse_pi),
 
     // temperature offset
-    MUIF_VARIABLE("IT", &menuTemperatureOffset, mui_u8g2_u8_opt_line_wa_mse_pi),
+    MUIF_VARIABLE("IT", &menuTemperatureOffsetIndex, mui_u8g2_u8_opt_line_wa_mse_pi),
 
     // humidity Offset
-    MUIF_VARIABLE("IH", &menuHumidityOffset, mui_u8g2_u8_opt_line_wa_mse_pi),
+    MUIF_VARIABLE("IH", &menuHumidityOffsetIndex, mui_u8g2_u8_opt_line_wa_mse_pi),
 
 };
 
@@ -200,36 +210,37 @@ fds_t fdsData[] =
                                                                                                                                                                         MUI_XYAT("G1", 64, 59, 1, " OK ")
 
                                                                                                                                                                             MUI_FORM(40)
-                                                                                                                                                                                MUI_STYLE(1)
-                                                                                                                                                                                    MUI_LABEL(5, 10, "Settings")
-                                                                                                                                                                                        MUI_XY("HR", 0, 13)
-                                                                                                                                                                                            MUI_STYLE(0)
-                                                                                                                                                                                                MUI_DATA("LG",
-                                                                                                                                                                                                         MUI_1 "Goto Main Menu|" MUI_41 "Thermometer Offset|" MUI_42 "Wi-Fi|" MUI_43 "Bluetooth|" MUI_99 "Version|")
-                                                                                                                                                                                                    MUI_XYA("GC", 5, 25, 0)
-                                                                                                                                                                                                        MUI_XYA("GC", 5, 37, 1)
-                                                                                                                                                                                                            MUI_XYA("GC", 5, 49, 2)
-                                                                                                                                                                                                                MUI_XYA("GC", 5, 61, 3)
+                                                                                                                                                                                MUI_AUX("SV")
+                                                                                                                                                                                    MUI_STYLE(1)
+                                                                                                                                                                                        MUI_LABEL(5, 10, "Settings")
+                                                                                                                                                                                            MUI_XY("HR", 0, 13)
+                                                                                                                                                                                                MUI_STYLE(0)
+                                                                                                                                                                                                    MUI_DATA("LG",
+                                                                                                                                                                                                             MUI_1 "Goto Main Menu|" MUI_41 "Thermometer Offset|" MUI_42 "Wi-Fi|" MUI_43 "Bluetooth|" MUI_99 "Version|")
+                                                                                                                                                                                                        MUI_XYA("GC", 5, 25, 0)
+                                                                                                                                                                                                            MUI_XYA("GC", 5, 37, 1)
+                                                                                                                                                                                                                MUI_XYA("GC", 5, 49, 2)
+                                                                                                                                                                                                                    MUI_XYA("GC", 5, 61, 3)
 
-                                                                                                                                                                                                                    MUI_FORM(41)
-                                                                                                                                                                                                                        MUI_STYLE(1)
-                                                                                                                                                                                                                            MUI_LABEL(5, 10, "Thermometer Offset")
-                                                                                                                                                                                                                                MUI_XY("HR", 0, 13)
-                                                                                                                                                                                                                                    MUI_STYLE(0)
-                                                                                                                                                                                                                                        MUI_LABEL(5, 27, "Temp. Offset:")
-                                                                                                                                                                                                                                            MUI_XYAT("IT", 76, 27, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5")
-                                                                                                                                                                                                                                                MUI_XY("DT", 100, 27)
-                                                                                                                                                                                                                                                    MUI_LABEL(5, 41, "Hum. Offset:")
-                                                                                                                                                                                                                                                        MUI_XYAT("IH", 76, 41, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5")
-                                                                                                                                                                                                                                                            MUI_XYAT("G1", 64, 59, 40, " OK ")
+                                                                                                                                                                                                                        MUI_FORM(41)
+                                                                                                                                                                                                                            MUI_STYLE(1)
+                                                                                                                                                                                                                                MUI_LABEL(5, 10, "Thermometer Offset")
+                                                                                                                                                                                                                                    MUI_XY("HR", 0, 13)
+                                                                                                                                                                                                                                        MUI_STYLE(0)
+                                                                                                                                                                                                                                            MUI_LABEL(5, 27, "Temp. Offset:")
+                                                                                                                                                                                                                                                MUI_XYAT("IT", 76, 27, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5")
+                                                                                                                                                                                                                                                    MUI_XY("DT", 100, 27)
+                                                                                                                                                                                                                                                        MUI_LABEL(5, 41, "Hum. Offset:")
+                                                                                                                                                                                                                                                            MUI_XYAT("IH", 76, 41, 10, "-5|-4|-3|-2|-1|+0|+1|+2|+3|+4|+5")
+                                                                                                                                                                                                                                                                MUI_XYAT("G1", 64, 59, 40, " OK ")
 
-                                                                                                                                                                                                                                                                MUI_FORM(99)
-                                                                                                                                                                                                                                                                    MUI_STYLE(1)
-                                                                                                                                                                                                                                                                        MUI_LABEL(5, 10, "Version")
-                                                                                                                                                                                                                                                                            MUI_XY("HR", 0, 13)
-                                                                                                                                                                                                                                                                                MUI_STYLE(0)
-                                                                                                                                                                                                                                                                                    MUI_LABEL(5, 29, VERSION)
-                                                                                                                                                                                                                                                                                        MUI_XYAT("G1", 64, 59, 40, " OK ")
+                                                                                                                                                                                                                                                                    MUI_FORM(99)
+                                                                                                                                                                                                                                                                        MUI_STYLE(1)
+                                                                                                                                                                                                                                                                            MUI_LABEL(5, 10, "Version")
+                                                                                                                                                                                                                                                                                MUI_XY("HR", 0, 13)
+                                                                                                                                                                                                                                                                                    MUI_STYLE(0)
+                                                                                                                                                                                                                                                                                        MUI_LABEL(5, 29, VERSION)
+                                                                                                                                                                                                                                                                                            MUI_XYAT("G1", 64, 59, 40, " OK ")
 
     ;
 
