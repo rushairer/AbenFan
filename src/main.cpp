@@ -8,6 +8,7 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
+#include "config.h"
 #include "Thermometer.h"
 #include "Fan.h"
 #include "RGBLed.h"
@@ -85,7 +86,7 @@ RGBLed rgbLed = RGBLed(&pixels);
 
 DinoGameArduino dinoGameArduino(&u8g2);
 
-Menu menu(&u8g2);
+abenfanmenu::Menu menu(&u8g2);
 
 BLE ble(APP_NAME, BLE_SERVICE_UUID, BLE_TX_CHARACTERISTIC_UUID, BLE_RX_CHARACTERISTIC_UUID);
 
@@ -206,10 +207,10 @@ void bleWhenReceivedValue(std::string value)
 
 void setupMenu()
 {
-    MenuSetupRGBLightOn(rgbLed.isOn());
-    MenuSetupTemperatureOffset(uint8_t(thermometer.getTemperatureOffset()));
-    MenuSetupHumidityOffset(uint8_t(thermometer.getHumidityOffset()));
-    MenuSetupBLEOn(ble.isOn());
+    abenfanmenu::MenuSetupRGBLightOn(rgbLed.isOn());
+    abenfanmenu::MenuSetupTemperatureOffset(uint8_t(thermometer.getTemperatureOffset()));
+    abenfanmenu::MenuSetupHumidityOffset(uint8_t(thermometer.getHumidityOffset()));
+    abenfanmenu::MenuSetupBLEOn(ble.isOn());
 }
 
 void startMenu()
@@ -351,14 +352,14 @@ void actionToggleBLE(uint8_t on)
 }
 
 // Menu Actions
-std::function<void()> MenuDinoRunFunc = actionStartDinoRun;
-std::function<void()> MenuDinoUltramanRunFunc = actionStartDinoUltramanRun;
-std::function<void()> MenuTurnOffFunc = actionTurnOff;
-std::function<void(uint8_t)> MenuRGBLightToggleFunc = actionToggleRGBLight;
-std::function<void(int8_t)> MenuChangeTemperatureOffsetFunc = actionChangeTemperatureOffset;
-std::function<void(int8_t)> MenuChangeHumidityOffsetFunc = actionChangeHumidityOffset;
-std::function<void()> MenuWhenWasClosed = []()
+std::function<void()> abenfanmenu::MenuDinoRunFunc = actionStartDinoRun;
+std::function<void()> abenfanmenu::MenuDinoUltramanRunFunc = actionStartDinoUltramanRun;
+std::function<void()> abenfanmenu::MenuTurnOffFunc = actionTurnOff;
+std::function<void(uint8_t)> abenfanmenu::MenuRGBLightToggleFunc = actionToggleRGBLight;
+std::function<void(int8_t)> abenfanmenu::MenuChangeTemperatureOffsetFunc = actionChangeTemperatureOffset;
+std::function<void(int8_t)> abenfanmenu::MenuChangeHumidityOffsetFunc = actionChangeHumidityOffset;
+std::function<void()> abenfanmenu::MenuWhenWasClosed = []()
 {
     currentScene = ABENFAN_SCENE_WELCOME;
 };
-std::function<void(uint8_t)> MenuToggleBLEFunc = actionToggleBLE;
+std::function<void(uint8_t)> abenfanmenu::MenuToggleBLEFunc = actionToggleBLE;
