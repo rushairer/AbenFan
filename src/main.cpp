@@ -7,6 +7,7 @@
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <WiFi.h>
 
 #include "config.h"
 #include "Thermometer.h"
@@ -15,6 +16,7 @@
 #include "dino_game_arduino.h"
 #include "Menu.h"
 #include "BLE.h"
+#include "wifimanager.h"
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -97,6 +99,8 @@ uint8_t inDinoRun = 0;
 
 AbenFanScene currentScene = ABENFAN_SCENE_WELCOME;
 
+WifiManager wifiManager((char *)"AbenFanPro", &WiFi, &MDNS, &Serial, 8081);
+
 void whenFormInactiveFunc();
 std::string bleGetValueToSend();
 void bleWhenReceivedValue(std::string value);
@@ -138,6 +142,9 @@ void setup()
 
     // menu
     menu.setup();
+
+    // wifi
+    wifiManager.setup();
 }
 
 void loop()
@@ -146,6 +153,7 @@ void loop()
     fan.loop();
     menu.loop(whenFormInactiveFunc);
     ble.loop();
+    wifiManager.loop();
 }
 
 std::string bleGetValueToSend()
@@ -346,6 +354,11 @@ void actionChangeHumidityOffset(int8_t offset)
     thermometer.setHumidityOffset(float(offset));
 }
 
+void actionWhenMenuWasClosed()
+{
+    currentScene = ABENFAN_SCENE_WELCOME;
+}
+
 void actionToggleBLE(uint8_t on)
 {
     ble.toggle(on);
@@ -358,8 +371,5 @@ std::function<void()> abenfanmenu::MenuTurnOffFunc = actionTurnOff;
 std::function<void(uint8_t)> abenfanmenu::MenuRGBLightToggleFunc = actionToggleRGBLight;
 std::function<void(int8_t)> abenfanmenu::MenuChangeTemperatureOffsetFunc = actionChangeTemperatureOffset;
 std::function<void(int8_t)> abenfanmenu::MenuChangeHumidityOffsetFunc = actionChangeHumidityOffset;
-std::function<void()> abenfanmenu::MenuWhenWasClosed = []()
-{
-    currentScene = ABENFAN_SCENE_WELCOME;
-};
+std::function<void()> abenfanmenu::MenuWhenWasClosed = actionWhenMenuWasClosed;
 std::function<void(uint8_t)> abenfanmenu::MenuToggleBLEFunc = actionToggleBLE;

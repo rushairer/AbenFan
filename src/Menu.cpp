@@ -232,7 +232,6 @@ namespace abenfanmenu
         {
             if (_isReDraw)
             {
-
                 _u8g2->firstPage();
                 do
                 {

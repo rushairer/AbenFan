@@ -125,8 +125,7 @@ void Thermometer::setHumidityOffset(float humidityOffset)
     _value->humidity = _aht20->getHumidity() + _humidityOffset;
 }
 
-uint8_t
-Thermometer::isAvailable()
+uint8_t Thermometer::isAvailable()
 {
     return _isAvailable;
 }
