@@ -31,12 +31,13 @@ protected:
 
     WebServer _webServer;
 
+    int _isAP;
+
     void autoConnect();
     int tryConnect();
     void createAP();
 
 private:
-    void handleIndex();
     void handleSavePassword();
     void handleClearPassword();
 
